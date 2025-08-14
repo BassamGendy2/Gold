@@ -33,11 +33,15 @@ generate_random_string() {
     openssl rand -base64 $length | tr -d "=+/" | cut -c1-$length
 }
 
-# Find next available port starting from 3000
+# Find next available port starting from 3001 (avoid common dev ports)
 find_available_port() {
-    local port=3000
-    while netstat -tuln | grep -q ":$port "; do
+    local port=3001
+    while netstat -tuln | grep -q ":$port " || lsof -i :$port >/dev/null 2>&1; do
         ((port++))
+        if [ $port -gt 9999 ]; then
+            print_error "No available ports found in range 3001-9999"
+            exit 1
+        fi
     done
     echo $port
 }
@@ -270,7 +274,7 @@ install_dependencies() {
         fi
         
         # Install additional tools
-        apt install -y git sqlite3 nginx certbot python3-certbot-nginx net-tools
+        apt install -y git sqlite3 nginx certbot python3-certbot-nginx net-tools lsof
         
         # Install MySQL if selected
         if [ "$DB_TYPE" = "mysql" ]; then
@@ -329,9 +333,21 @@ setup_application() {
         cd "$INSTALL_PATH"
     fi
     
-    # Install npm dependencies
+    # Install npm dependencies with legacy peer deps to handle React 19/vaul conflict
     print_status "Installing application dependencies..."
-    npm install --production
+    if ! npm install --legacy-peer-deps --production; then
+        print_error "Failed to install dependencies with --legacy-peer-deps"
+        print_status "Trying with --force flag..."
+        if ! npm install --force --production; then
+            print_error "Failed to install dependencies. Trying without production flag..."
+            if ! npm install --legacy-peer-deps; then
+                print_error "All npm install attempts failed. Please check the error messages above."
+                exit 1
+            fi
+        fi
+    fi
+    
+    print_success "Dependencies installed successfully"
     
     # Set permissions
     if [ "$INSTALL_AS_ROOT" = true ]; then
@@ -522,15 +538,15 @@ build_application() {
         npm pkg set scripts.dev="next dev"
     fi
     
-    # Build the application
+    # Build the application with legacy peer deps
     if ! npm run build; then
         print_error "Application build failed!"
         print_status "Checking for common issues..."
         
         # Check if Next.js is installed
         if ! npm list next &>/dev/null; then
-            print_status "Installing Next.js..."
-            npm install next@latest react@latest react-dom@latest
+            print_status "Installing Next.js with legacy peer deps..."
+            npm install --legacy-peer-deps next@latest react@latest react-dom@latest
         fi
         
         # Try building again
