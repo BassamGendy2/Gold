@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Financial Books - Application Presentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+        
+        .font-display { font-family: 'Playfair Display', serif; }
+        .font-body { font-family: 'Inter', sans-serif; }
+        
+        .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #B8860B 100%); }
+        .gold-text { background: linear-gradient(135deg, #D4AF37, #FFD700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .slide { min-height: 100vh; }
+        .mockup-shadow { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-900 text-white font-body">
+    
+    <!-- Title Slide -->
+    <section class="slide flex items-center justify-center gold-gradient">
+        <div class="text-center text-slate-900">
+            <h1 class="font-display text-6xl md:text-8xl font-bold mb-6">Gold Financial Books</h1>
+            <p class="text-xl md:text-2xl font-medium mb-8">Professional Gold Portfolio Management System</p>
+            <div class="flex items-center justify-center space-x-8 text-lg">
+                <span class="flex items-center"><span class="w-3 h-3 bg-slate-900 rounded-full mr-2"></span>Ubuntu Ready</span>
+                <span class="flex items-center"><span class="w-3 h-3 bg-slate-900 rounded-full mr-2"></span>Hybrid Storage</span>
+                <span class="flex items-center"><span class="w-3 h-3 bg-slate-900 rounded-full mr-2"></span>Offline Capable</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Slide -->
+    <section class="slide flex items-center justify-center bg-slate-900 px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="font-display text-5xl font-bold gold-text mb-12 text-center">Application Overview</h2>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-amber-400">Key Features</h3>
+                    <ul class="space-y-4 text-lg">
+                        <li class="flex items-start">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full mt-3 mr-4 flex-shrink-0"></span>
+                            <span><strong>Portfolio Tracking:</strong> Real-time gold holdings and valuation</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full mt-3 mr-4 flex-shrink-0"></span>
+                            <span><strong>Transaction Management:</strong> Buy/sell tracking with history</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full mt-3 mr-4 flex-shrink-0"></span>
+                            <span><strong>Secure Authentication:</strong> JWT-based user management</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full mt-3 mr-4 flex-shrink-0"></span>
+                            <span><strong>Hybrid Storage:</strong> Local SQLite + API fallback</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-2 h-2 bg-amber-400 rounded-full mt-3 mr-4 flex-shrink-0"></span>
+                            <span><strong>Ubuntu Deployment:</strong> Automated installation scripts</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-slate-800 rounded-2xl p-8 mockup-shadow">
+                    <h4 class="text-xl font-semibold mb-4 gold-text">Technology Stack</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="font-medium text-amber-400 mb-2">Frontend</p>
+                            <ul class="space-y-1 text-slate-300">
+                                <li>• Next.js 14</li>
+                                <li>• React 18</li>
+                                <li>• TypeScript</li>
+                                <li>• Tailwind CSS</li>
+                                <li>• shadcn/ui</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="font-medium text-amber-400 mb-2">Backend</p>
+                            <ul class="space-y-1 text-slate-300">
+                                <li>• Node.js API</li>
+                                <li>• SQLite Database</li>
+                                <li>• JWT Authentication</li>
+                                <li>• bcrypt Security</li>
+                                <li>• PM2 Process Manager</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- UI Mockups Slide -->
+    <section class="slide flex items-center justify-center bg-slate-800 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="font-display text-5xl font-bold gold-text mb-12 text-center">User Interface</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                
+                <!-- Login Mockup -->
+                <div class="bg-slate-900 rounded-2xl p-6 mockup-shadow">
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Authentication</h3>
+                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 text-slate-900">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 gold-gradient rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <span class="text-2xl">🏆</span>
+                            </div>
+                            <h4 class="font-display text-2xl font-bold">Gold Books</h4>
+                            <p class="text-slate-600">Sign in to your account</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="bg-white rounded-lg p-3 border">
+                                <input type="email" placeholder="Email" class="w-full bg-transparent outline-none text-sm" disabled>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 border">
+                                <input type="password" placeholder="Password" class="w-full bg-transparent outline-none text-sm" disabled>
+                            </div>
+                            <button class="w-full gold-gradient text-white py-3 rounded-lg font-medium">Sign In</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Mockup -->
+                <div class="bg-slate-900 rounded-2xl p-6 mockup-shadow">
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Portfolio Dashboard</h3>
+                    <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 text-slate-900">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-display text-xl font-bold">Portfolio</h4>
+                            <button class="gold-gradient text-white px-4 py-2 rounded-lg text-sm">Add Gold</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-white rounded-lg p-3 border">
+                                <p class="text-xs text-slate-600">Total Value</p>
+                                <p class="font-bold text-lg gold-text">$125,430</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 border">
+                                <p class="text-xs text-slate-600">Total Ounces</p>
+                                <p class="font-bold text-lg">65.2 oz</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="bg-white rounded-lg p-3 border flex justify-between">
+                                <span class="text-sm">Gold Bars</span>
+                                <span class="text-sm font-medium">45.0 oz</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 border flex justify-between">
+                                <span class="text-sm">Gold Coins</span>
+                                <span class="text-sm font-medium">20.2 oz</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Mockup -->
+                <div class="bg-slate-900 rounded-2xl p-6 mockup-shadow">
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Transaction History</h3>
+                    <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 text-slate-900">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-display text-xl font-bold">Recent</h4>
+                            <span class="text-xs text-slate-600">Last 30 days</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="bg-white rounded-lg p-3 border">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-sm">Buy Gold Bar</p>
+                                        <p class="text-xs text-slate-600">Dec 15, 2024</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium">+10.0 oz</p>
+                                        <p class="text-xs text-green-600">$19,250</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 border">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-sm">Buy Coins</p>
+                                        <p class="text-xs text-slate-600">Dec 10, 2024</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium">+5.2 oz</p>
+                                        <p class="text-xs text-green-600">$10,010</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 border">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-sm">Sell Gold</p>
+                                        <p class="text-xs text-slate-600">Dec 5, 2024</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium">-2.0 oz</p>
+                                        <p class="text-xs text-red-600">$3,850</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Slide -->
+    <section class="slide flex items-center justify-center bg-slate-900 px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="font-display text-5xl font-bold gold-text mb-12 text-center">Ubuntu Installation</h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-amber-400">Quick Install</h3>
+                    <div class="bg-slate-800 rounded-xl p-6 mockup-shadow">
+                        <pre class="text-green-400 text-sm overflow-x-auto"><code># Clone the repository
+git clone &lt;repo-url&gt;
+cd gold-financial-app
+
+# Run automated installer
+chmod +x scripts/quick-install.sh
+./scripts/quick-install.sh
+
+# Application will be available at:
+# http://localhost:3000</code></pre>
+                    </div>
+                    
+                    <h4 class="text-xl font-semibold mt-8 mb-4 text-amber-400">What Gets Installed</h4>
+                    <ul class="space-y-2 text-slate-300">
+                        <li>• Node.js 18+ and npm</li>
+                        <li>• SQLite3 database engine</li>
+                        <li>• PM2 process manager</li>
+                        <li>• Nginx reverse proxy</li>
+                        <li>• SSL certificates (Let's Encrypt)</li>
+                        <li>• Systemd service files</li>
+                        <li>• Automatic startup configuration</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-amber-400">System Requirements</h3>
+                    <div class="bg-slate-800 rounded-xl p-6 mockup-shadow mb-6">
+                        <h4 class="font-semibold mb-3 text-amber-300">Minimum Requirements</h4>
+                        <ul class="space-y-2 text-slate-300 text-sm">
+                            <li>• Ubuntu 20.04+ (or compatible Linux)</li>
+                            <li>• 2GB RAM minimum</li>
+                            <li>• 1GB free disk space</li>
+                            <li>• Internet connection for setup</li>
+                        </ul>
+                        
+                        <h4 class="font-semibold mb-3 mt-6 text-amber-300">Recommended</h4>
+                        <ul class="space-y-2 text-slate-300 text-sm">
+                            <li>• Ubuntu 22.04 LTS</li>
+                            <li>• 4GB+ RAM</li>
+                            <li>• SSD storage</li>
+                            <li>• Domain name for SSL</li>
+                        </ul>
+                    </div>
+                    
+                    <h4 class="text-xl font-semibold mb-4 text-amber-400">Production Features</h4>
+                    <ul class="space-y-2 text-slate-300">
+                        <li>• Automatic SSL certificate renewal</li>
+                        <li>• Database backup automation</li>
+                        <li>• Process monitoring and restart</li>
+                        <li>• Security hardening</li>
+                        <li>• Log rotation and management</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Slide -->
+    <section class="slide flex items-center justify-center bg-slate-800 px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="font-display text-5xl font-bold gold-text mb-12 text-center">System Architecture</h2>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h3 class="text-2xl font-semibold mb-6 text-amber-400">Hybrid Storage System</h3>
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 rounded-xl p-6 mockup-shadow">
+                            <h4 class="font-semibold mb-3 text-amber-300">Local Storage (Primary)</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li>• SQLite database for production</li>
+                                <li>• Browser localStorage for preview</li>
+                                <li>• Offline-first architecture</li>
+                                <li>• Fast local operations</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-slate-900 rounded-xl p-6 mockup-shadow">
+                            <h4 class="font-semibold mb-3 text-amber-300">API Backend (Fallback)</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li>• RESTful API endpoints</li>
+                                <li>• Automatic sync capabilities</li>
+                                <li>• Cloud backup integration</li>
+                                <li>• Multi-device synchronization</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-900 rounded-xl p-8 mockup-shadow">
+                    <h4 class="text-xl font-semibold mb-6 gold-text text-center">Data Flow</h4>
+                    <div class="space-y-4 text-center">
+                        <div class="bg-amber-400 text-slate-900 rounded-lg p-3 font-medium">
+                            User Interface
+                        </div>
+                        <div class="text-amber-400">↕</div>
+                        <div class="bg-slate-700 rounded-lg p-3">
+                            Hybrid Storage Layer
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="bg-green-600 rounded-lg p-2 text-sm flex-1 mr-2">
+                                Local SQLite
+                            </div>
+                            <div class="text-slate-400">+</div>
+                            <div class="bg-blue-600 rounded-lg p-2 text-sm flex-1 ml-2">
+                                API Fallback
+                            </div>
+                        </div>
+                        <div class="text-amber-400">↕</div>
+                        <div class="bg-slate-700 rounded-lg p-3">
+                            Authentication & Security
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Detail Slide -->
+    <section class="slide flex items-center justify-center bg-slate-900 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="font-display text-5xl font-bold gold-text mb-12 text-center">Detailed Features</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                
+                <div class="bg-slate-800 rounded-2xl p-6 mockup-shadow">
+                    <div class="w-12 h-12 gold-gradient rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Portfolio Management</h3>
+                    <ul class="space-y-2 text-slate-300 text-sm">
+                        <li>• Real-time portfolio valuation</li>
+                        <li>• Multiple gold types (bars, coins, jewelry)</li>
+                        <li>• Performance tracking and analytics</li>
+                        <li>• Cost basis and profit/loss calculations</li>
+                        <li>• Portfolio diversification insights</li>
+                        <li>• Export reports to PDF/Excel</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 mockup-shadow">
+                    <div class="w-12 h-12 gold-gradient rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-2xl">💰</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Transaction System</h3>
+                    <ul class="space-y-2 text-slate-300 text-sm">
+                        <li>• Buy/sell transaction recording</li>
+                        <li>• Automatic portfolio updates</li>
+                        <li>• Transaction categorization</li>
+                        <li>• Receipt and document storage</li>
+                        <li>• Tax reporting assistance</li>
+                        <li>• Transaction search and filtering</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 mockup-shadow">
+                    <div class="w-12 h-12 gold-gradient rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-2xl">🔒</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Security & Privacy</h3>
+                    <ul class="space-y-2 text-slate-300 text-sm">
+                        <li>• JWT-based authentication</li>
+                        <li>• bcrypt password encryption</li>
+                        <li>• Local data storage (no cloud dependency)</li>
+                        <li>• Session management</li>
+                        <li>• Data backup and restore</li>
+                        <li>• Multi-user support with permissions</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 mockup-shadow">
+                    <div class="w-12 h-12 gold-gradient rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-2xl">📱</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">User Experience</h3>
+                    <ul class="space-y-2 text-slate-300 text-sm">
+                        <li>• Responsive design (mobile-first)</li>
+                        <li>• Luxury gold-themed interface</li>
+                        <li>• Dark/light mode support</li>
+                        <li>• Intuitive navigation</li>
+                        <li>• Fast loading and smooth animations</li>
+                        <li>• Accessibility compliant (WCAG)</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 mockup-shadow">
+                    <div class="w-12 h-12 gold-gradient rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-2xl">🖥️</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">System Integration</h3>
+                    <ul class="space-y-2 text-slate-300 text-sm">
+                        <li>• Ubuntu native installation</li>
+                        <li>• Systemd service integration</li>
+                        <li>• Nginx reverse proxy setup</li>
+                        <li>• PM2 process management</li>
+                        <li>• Automatic SSL certificate setup</li>
+                        <li>• Log management and monitoring</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 mockup-shadow">
+                    <div class="w-12 h-12 gold-gradient rounded-xl flex items-center justify-center mb-4">
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-amber-400">Performance</h3>
+                    <ul class="space-y-2 text-slate-300 text-sm">
+                        <li>• Offline-first architecture</li>
+                        <li>• Local SQLite for fast queries</li>
+                        <li>• Optimized bundle size</li>
+                        <li>• Lazy loading and code splitting</li>
+                        <li>• Efficient state management</li>
+                        <li>• Minimal server requirements</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conclusion Slide -->
+    <section class="slide flex items-center justify-center gold-gradient">
+        <div class="text-center text-slate-900 max-w-4xl mx-auto px-8">
+            <h2 class="font-display text-5xl md:text-6xl font-bold mb-8">Ready to Deploy</h2>
+            <p class="text-xl md:text-2xl mb-8 font-medium">Professional gold portfolio management system with enterprise-grade security and Ubuntu-native deployment.</p>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="bg-slate-900/10 backdrop-blur rounded-2xl p-6">
+                    <h3 class="font-semibold text-lg mb-2">One-Command Install</h3>
+                    <p class="text-sm">Automated Ubuntu deployment with all dependencies</p>
+                </div>
+                <div class="bg-slate-900/10 backdrop-blur rounded-2xl p-6">
+                    <h3 class="font-semibold text-lg mb-2">Production Ready</h3>
+                    <p class="text-sm">SSL, monitoring, backups, and security included</p>
+                </div>
+                <div class="bg-slate-900/10 backdrop-blur rounded-2xl p-6">
+                    <h3 class="font-semibold text-lg mb-2">Offline Capable</h3>
+                    <p class="text-sm">Works without internet with local storage</p>
+                </div>
+            </div>
+            
+            <div class="bg-slate-900 rounded-2xl p-8 text-white">
+                <h4 class="text-xl font-semibold mb-4">Get Started</h4>
+                <pre class="text-left text-green-400 text-sm bg-slate-800 rounded-lg p-4"><code>git clone &lt;repository-url&gt;
+cd gold-financial-app
+chmod +x scripts/quick-install.sh
+./scripts/quick-install.sh</code></pre>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,149 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated to gold-themed design tokens */
+  --background: #ffffff;
+  --foreground: #4b4b4b;
+  --card: #f5f5f5;
+  --card-foreground: #4b4b4b;
+  --popover: #ffffff;
+  --popover-foreground: #4b4b4b;
+  --primary: #ffd700;
+  --primary-foreground: #4b4b4b;
+  --secondary: #cdaa00;
+  --secondary-foreground: #ffffff;
+  --muted: #f5f5f5;
+  --muted-foreground: #4b4b4b;
+  --accent: #cdaa00;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #ffffff;
+  --ring: rgba(255, 215, 0, 0.5);
+  --chart-1: #ffd700;
+  --chart-2: #cdaa00;
+  --chart-3: #f5f5f5;
+  --chart-4: #4b4b4b;
+  --chart-5: #ffffff;
+  --radius: 0.5rem;
+  --sidebar: #f5f5f5;
+  --sidebar-foreground: #4b4b4b;
+  --sidebar-primary: #ffd700;
+  --sidebar-primary-foreground: #4b4b4b;
+  --sidebar-accent: #cdaa00;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: rgba(255, 215, 0, 0.5);
+}
+
+.dark {
+  /* Updated dark mode with gold accents */
+  --background: #1a1a1a;
+  --foreground: #f5f5f5;
+  --card: #2a2a2a;
+  --card-foreground: #f5f5f5;
+  --popover: #2a2a2a;
+  --popover-foreground: #f5f5f5;
+  --primary: #ffd700;
+  --primary-foreground: #1a1a1a;
+  --secondary: #cdaa00;
+  --secondary-foreground: #f5f5f5;
+  --muted: #3a3a3a;
+  --muted-foreground: #a0a0a0;
+  --accent: #cdaa00;
+  --accent-foreground: #f5f5f5;
+  --destructive: #dc2626;
+  --destructive-foreground: #f5f5f5;
+  --border: #3a3a3a;
+  --input: #2a2a2a;
+  --ring: rgba(255, 215, 0, 0.3);
+  --chart-1: #ffd700;
+  --chart-2: #cdaa00;
+  --chart-3: #3a3a3a;
+  --chart-4: #a0a0a0;
+  --chart-5: #f5f5f5;
+  --sidebar: #2a2a2a;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #ffd700;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #cdaa00;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #3a3a3a;
+  --sidebar-ring: rgba(255, 215, 0, 0.3);
+}
+
+/* Added custom gold gradient and animations */
+.gold-gradient {
+  background: linear-gradient(135deg, #ffd700 0%, #cdaa00 100%);
+}
+
+.gold-shimmer {
+  background: linear-gradient(90deg, #ffd700 0%, #fff8dc 50%, #ffd700 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.coin-spin {
+  animation: spin 2s linear infinite;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
