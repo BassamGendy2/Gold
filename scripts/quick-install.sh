@@ -355,10 +355,55 @@ setup_web_server() {
     if [ "$INSTALL_AS_ROOT" = true ]; then
         print_status "🌐 Configuring Nginx..."
         
-        # Create Nginx configuration
+        # Remove default nginx site to avoid conflicts
+        rm -f /etc/nginx/sites-enabled/default
+        
+        cat > /etc/nginx/sites-available/goldbooks << EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+    
+    location $APP_PATH/ {
+        proxy_pass http://localhost:3000$APP_PATH/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_redirect off;
+    }
+    
+    $([ -n "$APP_PATH" ] && echo "
+    # Redirect root to app path
+    location = / {
+        return 301 \$scheme://\$server_name$APP_PATH/;
+    }")
+}
+EOF
+        
+        # Enable site and test configuration
+        ln -sf /etc/nginx/sites-available/goldbooks /etc/nginx/sites-enabled/
+        
+        if ! nginx -t; then
+            print_error "Nginx configuration test failed"
+            exit 1
+        fi
+        
+        # Reload nginx with HTTP configuration
+        systemctl reload nginx
+        print_success "Nginx HTTP configuration applied successfully"
+        
         if [ "$ENABLE_SSL" = true ]; then
-            # SSL-enabled configuration with HTTP redirect
-            cat > /etc/nginx/sites-available/goldbooks << EOF
+            print_status "🔒 Setting up SSL certificate..."
+            
+            # Get SSL certificate
+            if certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$ADMIN_EMAIL" --redirect; then
+                print_success "SSL certificate installed successfully"
+                
+                cat > /etc/nginx/sites-available/goldbooks << EOF
 # HTTP server - redirect to HTTPS
 server {
     listen 80;
@@ -368,10 +413,15 @@ server {
 
 # HTTPS server
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name $DOMAIN;
     
-    # SSL configuration will be added by certbot
+    # SSL configuration managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
     
     location $APP_PATH/ {
         proxy_pass http://localhost:3000$APP_PATH/;
@@ -393,54 +443,23 @@ server {
     }")
 }
 EOF
-        else
-            # HTTP-only configuration
-            cat > /etc/nginx/sites-available/goldbooks << EOF
-server {
-    listen 80;
-    server_name $DOMAIN;
-    
-    location $APP_PATH/ {
-        proxy_pass http://localhost:3000$APP_PATH/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_redirect off;
-    }
-    
-    $([ -n "$APP_PATH" ] && echo "
-    # Redirect root to app path
-    location = / {
-        return 301 \$scheme://\$server_name$APP_PATH/;
-    }")
-}
-EOF
-        fi
-        
-        # Enable site
-        ln -sf /etc/nginx/sites-available/goldbooks /etc/nginx/sites-enabled/
-        
-        # Remove default nginx site to avoid conflicts
-        rm -f /etc/nginx/sites-enabled/default
-        
-        # Test nginx configuration
-        if nginx -t; then
-            systemctl reload nginx
-            print_success "Nginx configured successfully"
-        else
-            print_error "Nginx configuration failed"
-            exit 1
-        fi
-        
-        # Setup SSL if requested
-        if [ "$ENABLE_SSL" = true ]; then
-            print_status "🔒 Setting up SSL certificate..."
-            certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$ADMIN_EMAIL" --redirect
+                
+                # Test and reload final configuration
+                if nginx -t; then
+                    systemctl reload nginx
+                    print_success "SSL configuration applied successfully"
+                else
+                    print_error "SSL configuration test failed, reverting to HTTP"
+                    # Revert to HTTP configuration
+                    certbot delete --cert-name "$DOMAIN" --non-interactive
+                    ENABLE_SSL=false
+                    PROTOCOL="http"
+                fi
+            else
+                print_warning "SSL certificate installation failed, continuing with HTTP"
+                ENABLE_SSL=false
+                PROTOCOL="http"
+            fi
         fi
     fi
 }
