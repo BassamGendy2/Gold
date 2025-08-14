@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Gold Financial Books - Sequential Quick Installer
-echo "🏆 Gold Financial Books - Sequential Quick Installer"
-echo "=================================================="
+# Gold Financial Books - Multi-Instance Sequential Quick Installer
+echo "🏆 Gold Financial Books - Multi-Instance Sequential Quick Installer"
+echo "=================================================================="
 
 # Colors for output
 RED='\033[0;31m'
@@ -31,6 +31,25 @@ print_warning() {
 generate_random_string() {
     local length=${1:-16}
     openssl rand -base64 $length | tr -d "=+/" | cut -c1-$length
+}
+
+# Find next available port starting from 3000
+find_available_port() {
+    local port=3000
+    while netstat -tuln | grep -q ":$port "; do
+        ((port++))
+    done
+    echo $port
+}
+
+check_path_availability() {
+    local path="$1"
+    if [ -f "/etc/nginx/sites-available/goldbooks" ]; then
+        if grep -q "location $path" /etc/nginx/sites-available/goldbooks; then
+            return 1  # Path already in use
+        fi
+    fi
+    return 0  # Path available
 }
 
 # ============================================================================
@@ -72,65 +91,62 @@ collect_all_configuration() {
     # 4. Application Path Configuration
     echo
     echo "📁 APPLICATION PATH:"
-    echo "   How do you want to access your Gold Financial Books application?"
-    echo "   1) Root domain ($DOMAIN)"
-    echo "   2) Subdirectory ($DOMAIN/gold)"
-    echo "   3) Custom subdirectory ($DOMAIN/your-path)"
+    echo "   How do you want to access this Gold Financial Books instance?"
+    echo "   Examples: /gold, /finance, /books, /trading, /portfolio"
     echo
+    
+    if [ -f "/etc/nginx/sites-available/goldbooks" ]; then
+        print_status "Existing instances detected:"
+        grep -o "location [^{]*" /etc/nginx/sites-available/goldbooks | grep -v "location /" | sed 's/location /   • /'
+        echo
+    fi
+    
     while true; do
-        read -p "   Select option (1-3): " path_choice
-        case $path_choice in
-            1) 
-                APP_PATH=""
-                APP_URL_PATH=""
-                break 
-                ;;
-            2) 
-                APP_PATH="/gold"
-                APP_URL_PATH="/gold"
-                break 
-                ;;
-            3) 
-                read -p "   Enter custom path (e.g., /books, /finance): " custom_path
-                # Ensure path starts with /
-                if [[ ! $custom_path == /* ]]; then
-                    custom_path="/$custom_path"
-                fi
-                APP_PATH="$custom_path"
-                APP_URL_PATH="$custom_path"
-                break 
-                ;;
-            *) 
-                print_error "   Invalid option. Please choose 1-3." 
-                ;;
-        esac
+        read -p "   Enter path for this instance (e.g., /gold): " custom_path
+        
+        # Ensure path starts with /
+        if [[ ! $custom_path == /* ]]; then
+            custom_path="/$custom_path"
+        fi
+        
+        if ! check_path_availability "$custom_path"; then
+            print_error "   Path $custom_path is already in use. Please choose a different path."
+            continue
+        fi
+        
+        APP_PATH="$custom_path"
+        APP_URL_PATH="$custom_path"
+        break
     done
 
-    # 5. Installation Directory
+    # 5. Installation Directory - Use path-specific directory
     echo
     echo "📂 INSTALLATION DIRECTORY:"
+    INSTANCE_NAME=$(echo "$APP_PATH" | sed 's/\///g')  # Remove slashes for directory name
+    
     if [ "$ALREADY_IN_REPO" = true ]; then
         echo "   Current location: $CURRENT_PATH"
-        echo "   1) Install here (current directory)"
-        echo "   2) Copy to /opt/gold-books"
-        echo "   3) Copy to /var/www/gold-books"
-        echo "   4) Copy to custom directory"
+        echo "   1) Copy to /opt/gold-books-$INSTANCE_NAME"
+        echo "   2) Copy to /var/www/gold-books-$INSTANCE_NAME"
+        echo "   3) Copy to custom directory"
         echo
         while true; do
-            read -p "   Select option (1-4): " dir_choice
+            read -p "   Select option (1-3): " dir_choice
             case $dir_choice in
-                1) INSTALL_PATH="$CURRENT_PATH"; SKIP_CLONE=true; break ;;
-                2) INSTALL_PATH="/opt/gold-books"; SKIP_CLONE=false; break ;;
-                3) INSTALL_PATH="/var/www/gold-books"; SKIP_CLONE=false; break ;;
-                4) read -p "   Enter custom directory: " INSTALL_PATH; SKIP_CLONE=false; break ;;
-                *) print_error "   Invalid option. Please choose 1-4." ;;
+                1) INSTALL_PATH="/opt/gold-books-$INSTANCE_NAME"; SKIP_CLONE=false; break ;;
+                2) INSTALL_PATH="/var/www/gold-books-$INSTANCE_NAME"; SKIP_CLONE=false; break ;;
+                3) read -p "   Enter custom directory: " INSTALL_PATH; SKIP_CLONE=false; break ;;
+                *) print_error "   Invalid option. Please choose 1-3." ;;
             esac
         done
     else
-        INSTALL_PATH="/opt/gold-books"
+        INSTALL_PATH="/opt/gold-books-$INSTANCE_NAME"
         SKIP_CLONE=false
         print_status "Will install to: $INSTALL_PATH"
     fi
+
+    APP_PORT=$(find_available_port)
+    print_status "Assigned port: $APP_PORT"
 
     # 6. SSL Configuration
     echo
@@ -145,10 +161,10 @@ collect_all_configuration() {
         PORT="443"
     fi
 
-    # 7. Database Configuration (Auto-generated credentials)
+    # 7. Database Configuration - Auto-generated unique credentials
     echo
     echo "💾 DATABASE CONFIGURATION:"
-    echo "   1) SQLite (recommended for single server)"
+    echo "   1) SQLite (recommended for multiple instances)"
     echo "   2) MySQL (requires existing MySQL server)"
     echo
     while true; do
@@ -156,15 +172,20 @@ collect_all_configuration() {
         case $db_choice in
             1) 
                 DB_TYPE="sqlite"
-                DB_PATH="$INSTALL_PATH/data/goldbooks.db"
+                DB_NAME="goldbooks_${INSTANCE_NAME}_$(generate_random_string 8).db"
+                DB_PATH="$INSTALL_PATH/data/$DB_NAME"
+                print_status "Generated SQLite database: $DB_NAME"
                 break 
                 ;;
             2) 
                 DB_TYPE="mysql"
-                # Generate random database credentials
-                DB_NAME="goldbooks_$(generate_random_string 8)"
-                DB_USER="gold_$(generate_random_string 8)"
+                DB_NAME="goldbooks_${INSTANCE_NAME}_$(generate_random_string 8)"
+                DB_USER="gold_${INSTANCE_NAME}_$(generate_random_string 6)"
                 DB_PASS="$(generate_random_string 24)"
+                print_status "Generated MySQL credentials:"
+                print_status "  Database: $DB_NAME"
+                print_status "  User: $DB_USER"
+                print_status "  Password: $DB_PASS"
                 read -p "   MySQL root password: " -s mysql_root_pass
                 echo
                 MYSQL_ROOT_PASS="$mysql_root_pass"
@@ -179,14 +200,14 @@ collect_all_configuration() {
     # 8. Admin User Configuration
     echo
     echo "👤 ADMIN USER SETUP:"
-    read -p "   Admin email (default: admin@$DOMAIN): " admin_email
-    ADMIN_EMAIL="${admin_email:-admin@$DOMAIN}"
+    read -p "   Admin email (default: admin-$INSTANCE_NAME@$DOMAIN): " admin_email
+    ADMIN_EMAIL="${admin_email:-admin-$INSTANCE_NAME@$DOMAIN}"
     
     # Generate random admin password
     ADMIN_PASSWORD="$(generate_random_string 16)"
     print_status "Generated secure admin password: $ADMIN_PASSWORD"
 
-    # 9. Service Configuration
+    # 9. Service Configuration - Instance-specific service name
     echo
     if [ "$INSTALL_AS_ROOT" = true ]; then
         read -p "🔧 Install as system service (auto-start)? (Y/n): " service_choice
@@ -194,6 +215,7 @@ collect_all_configuration() {
             INSTALL_SERVICE=false
         else
             INSTALL_SERVICE=true
+            SERVICE_NAME="goldbooks-$INSTANCE_NAME"
         fi
     else
         INSTALL_SERVICE=false
@@ -203,8 +225,10 @@ collect_all_configuration() {
     echo
     echo "📋 CONFIGURATION SUMMARY:"
     echo "========================="
+    echo "   🏷️  Instance: $INSTANCE_NAME"
     echo "   🌐 Domain: $DOMAIN"
     echo "   📁 App Path: $DOMAIN$APP_PATH"
+    echo "   🔌 Port: $APP_PORT"
     echo "   📂 Install Dir: $INSTALL_PATH"
     echo "   🔒 SSL: $([ "$ENABLE_SSL" = true ] && echo "Enabled" || echo "Disabled")"
     echo "   💾 Database: $DB_TYPE"
@@ -212,10 +236,12 @@ collect_all_configuration() {
         echo "   📊 DB Name: $DB_NAME"
         echo "   👤 DB User: $DB_USER"
         echo "   🔑 DB Pass: $DB_PASS"
+    elif [ "$DB_TYPE" = "sqlite" ]; then
+        echo "   📁 DB File: $DB_NAME"
     fi
     echo "   👤 Admin: $ADMIN_EMAIL"
     echo "   🔑 Admin Pass: $ADMIN_PASSWORD"
-    echo "   🔧 System Service: $([ "$INSTALL_SERVICE" = true ] && echo "Yes" || echo "No")"
+    echo "   🔧 System Service: $([ "$INSTALL_SERVICE" = true ] && echo "$SERVICE_NAME" || echo "No")"
     echo
     
     read -p "Proceed with installation? (Y/n): " confirm
@@ -244,7 +270,7 @@ install_dependencies() {
         fi
         
         # Install additional tools
-        apt install -y git sqlite3 nginx certbot python3-certbot-nginx
+        apt install -y git sqlite3 nginx certbot python3-certbot-nginx net-tools
         
         # Install MySQL if selected
         if [ "$DB_TYPE" = "mysql" ]; then
@@ -318,10 +344,9 @@ setup_application() {
 configure_environment() {
     print_status "⚙️  Configuring environment..."
     
-    # Create environment file
     cat > .env.production << EOF
 NODE_ENV=production
-PORT=3000
+PORT=$APP_PORT
 $([ "$DB_TYPE" = "sqlite" ] && echo "DATABASE_PATH=$DB_PATH" || echo "DATABASE_URL=$DB_URL")
 JWT_SECRET=$(openssl rand -base64 32)
 NEXT_PUBLIC_APP_URL=$PROTOCOL://$DOMAIN$APP_PATH
@@ -330,10 +355,9 @@ ADMIN_EMAIL=$ADMIN_EMAIL
 ADMIN_PASSWORD=$ADMIN_PASSWORD
 EOF
 
-    # Update Next.js config for subdirectory if needed
-    if [ -n "$APP_URL_PATH" ]; then
-        print_status "Configuring Next.js for subdirectory deployment..."
-        cat > next.config.mjs << EOF
+    # Update Next.js config for subdirectory
+    print_status "Configuring Next.js for subdirectory deployment..."
+    cat > next.config.mjs << EOF
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: '$APP_URL_PATH',
@@ -344,7 +368,6 @@ const nextConfig = {
 
 export default nextConfig
 EOF
-    fi
 
     # Initialize database
     print_status "Initializing database..."
@@ -355,16 +378,58 @@ setup_web_server() {
     if [ "$INSTALL_AS_ROOT" = true ]; then
         print_status "🌐 Configuring Nginx..."
         
-        # Remove default nginx site to avoid conflicts
-        rm -f /etc/nginx/sites-enabled/default
-        
-        cat > /etc/nginx/sites-available/goldbooks << EOF
+        if [ -f "/etc/nginx/sites-available/goldbooks" ]; then
+            print_status "Adding new instance to existing nginx configuration..."
+            
+            # Backup existing config
+            cp /etc/nginx/sites-available/goldbooks /etc/nginx/sites-available/goldbooks.backup.$(date +%s)
+            
+            # Add new location block before the closing brace of the server block
+            sed -i "/^}$/i\\
+\\
+    # $INSTANCE_NAME instance\\
+    location $APP_PATH {\\
+        return 301 \$scheme://\$server_name$APP_PATH/;\\
+    }\\
+\\
+    location $APP_PATH/ {\\
+        proxy_pass http://localhost:$APP_PORT/;\\
+        proxy_http_version 1.1;\\
+        proxy_set_header Upgrade \$http_upgrade;\\
+        proxy_set_header Connection 'upgrade';\\
+        proxy_set_header Host \$host;\\
+        proxy_set_header X-Real-IP \$remote_addr;\\
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\\
+        proxy_set_header X-Forwarded-Proto \$scheme;\\
+        proxy_set_header X-Forwarded-Prefix $APP_PATH;\\
+        proxy_cache_bypass \$http_upgrade;\\
+        proxy_redirect off;\\
+\\
+        # Handle static assets\\
+        location ~* $APP_PATH/(_next/static|favicon\.ico) {\\
+            proxy_pass http://localhost:$APP_PORT;\\
+            expires 1y;\\
+            add_header Cache-Control \"public, immutable\";\\
+        }\\
+    }" /etc/nginx/sites-available/goldbooks
+            
+        else
+            print_status "Creating new nginx configuration..."
+            # Remove default nginx site to avoid conflicts
+            rm -f /etc/nginx/sites-enabled/default
+            
+            cat > /etc/nginx/sites-available/goldbooks << EOF
 server {
     listen 80;
     server_name $DOMAIN;
     
+    # $INSTANCE_NAME instance
+    location $APP_PATH {
+        return 301 \$scheme://\$server_name$APP_PATH/;
+    }
+    
     location $APP_PATH/ {
-        proxy_pass http://localhost:3000$APP_PATH/;
+        proxy_pass http://localhost:$APP_PORT/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -372,23 +437,27 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Prefix $APP_PATH;
         proxy_cache_bypass \$http_upgrade;
         proxy_redirect off;
+        
+        # Handle static assets
+        location ~* $APP_PATH/(_next/static|favicon\.ico) {
+            proxy_pass http://localhost:$APP_PORT;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
     }
-    
-    $([ -n "$APP_PATH" ] && echo "
-    # Redirect root to app path
-    location = / {
-        return 301 \$scheme://\$server_name$APP_PATH/;
-    }")
 }
 EOF
+        fi
         
         # Enable site and test configuration
         ln -sf /etc/nginx/sites-available/goldbooks /etc/nginx/sites-enabled/
         
         if ! nginx -t; then
             print_error "Nginx configuration test failed"
+            cat /var/log/nginx/error.log | tail -10
             exit 1
         fi
         
@@ -396,82 +465,30 @@ EOF
         systemctl reload nginx
         print_success "Nginx HTTP configuration applied successfully"
         
-        if [ "$ENABLE_SSL" = true ]; then
+        if [ "$ENABLE_SSL" = true ] && ! grep -q "ssl_certificate" /etc/nginx/sites-available/goldbooks; then
             print_status "🔒 Setting up SSL certificate..."
             
             # Get SSL certificate
             if certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "$ADMIN_EMAIL" --redirect; then
                 print_success "SSL certificate installed successfully"
-                
-                cat > /etc/nginx/sites-available/goldbooks << EOF
-# HTTP server - redirect to HTTPS
-server {
-    listen 80;
-    server_name $DOMAIN;
-    return 301 https://\$server_name\$request_uri;
-}
-
-# HTTPS server
-server {
-    listen 443 ssl;
-    http2 on;
-    server_name $DOMAIN;
-    
-    # SSL configuration managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-    
-    location $APP_PATH/ {
-        proxy_pass http://localhost:3000$APP_PATH/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_redirect off;
-    }
-    
-    $([ -n "$APP_PATH" ] && echo "
-    # Redirect root to app path
-    location = / {
-        return 301 \$scheme://\$server_name$APP_PATH/;
-    }")
-}
-EOF
-                
-                # Test and reload final configuration
-                if nginx -t; then
-                    systemctl reload nginx
-                    print_success "SSL configuration applied successfully"
-                else
-                    print_error "SSL configuration test failed, reverting to HTTP"
-                    # Revert to HTTP configuration
-                    certbot delete --cert-name "$DOMAIN" --non-interactive
-                    ENABLE_SSL=false
-                    PROTOCOL="http"
-                fi
             else
                 print_warning "SSL certificate installation failed, continuing with HTTP"
                 ENABLE_SSL=false
                 PROTOCOL="http"
             fi
+        elif [ "$ENABLE_SSL" = true ]; then
+            print_status "SSL already configured for domain"
         fi
     fi
 }
 
 setup_system_service() {
     if [ "$INSTALL_SERVICE" = true ]; then
-        print_status "🔧 Setting up system service..."
+        print_status "🔧 Setting up system service: $SERVICE_NAME..."
         
-        # Create systemd service
-        cat > /etc/systemd/system/goldbooks.service << EOF
+        cat > /etc/systemd/system/$SERVICE_NAME.service << EOF
 [Unit]
-Description=Gold Financial Books Application
+Description=Gold Financial Books Application - $INSTANCE_NAME
 After=network.target
 
 [Service]
@@ -479,6 +496,7 @@ Type=simple
 User=www-data
 WorkingDirectory=$INSTALL_PATH
 Environment=NODE_ENV=production
+Environment=PORT=$APP_PORT
 ExecStart=/usr/bin/npm start
 Restart=always
 RestartSec=10
@@ -489,29 +507,114 @@ EOF
         
         # Enable and start service
         systemctl daemon-reload
-        systemctl enable goldbooks
-        systemctl start goldbooks
+        systemctl enable $SERVICE_NAME
+        systemctl start $SERVICE_NAME
     fi
 }
 
 build_application() {
     print_status "🔨 Building application..."
-    npm run build
+    
+    if ! grep -q '"build"' package.json; then
+        print_status "Adding build script to package.json..."
+        npm pkg set scripts.build="next build"
+        npm pkg set scripts.start="next start"
+        npm pkg set scripts.dev="next dev"
+    fi
+    
+    # Build the application
+    if ! npm run build; then
+        print_error "Application build failed!"
+        print_status "Checking for common issues..."
+        
+        # Check if Next.js is installed
+        if ! npm list next &>/dev/null; then
+            print_status "Installing Next.js..."
+            npm install next@latest react@latest react-dom@latest
+        fi
+        
+        # Try building again
+        if ! npm run build; then
+            print_error "Build failed again. Check the logs above."
+            exit 1
+        fi
+    fi
+    
+    print_success "Application built successfully"
 }
 
 start_application() {
+    print_status "🚀 Starting application..."
+    
     if [ "$INSTALL_SERVICE" = true ]; then
-        print_status "🚀 Application started as system service"
-    else
-        print_status "🚀 Starting application..."
-        if command -v pm2 &> /dev/null; then
-            pm2 start npm --name "goldbooks" -- start
-            pm2 save
+        systemctl start $SERVICE_NAME
+        
+        # Wait for service to start and check status
+        sleep 5
+        if systemctl is-active --quiet $SERVICE_NAME; then
+            print_success "Application started as system service: $SERVICE_NAME"
         else
-            nohup npm start > goldbooks.log 2>&1 &
-            echo $! > goldbooks.pid
+            print_error "System service failed to start"
+            systemctl status $SERVICE_NAME
+            journalctl -u $SERVICE_NAME --no-pager -n 20
+            exit 1
+        fi
+    else
+        PM2_NAME="goldbooks-$INSTANCE_NAME"
+        
+        if command -v pm2 &> /dev/null; then
+            pm2 delete $PM2_NAME 2>/dev/null || true
+            cd "$INSTALL_PATH"
+            PORT=$APP_PORT pm2 start npm --name "$PM2_NAME" -- start
+            pm2 save
+            
+            # Wait and check if PM2 process is running
+            sleep 5
+            if pm2 list | grep -q "$PM2_NAME.*online"; then
+                print_success "Application started with PM2: $PM2_NAME"
+            else
+                print_error "PM2 startup failed"
+                pm2 logs $PM2_NAME --lines 20
+                exit 1
+            fi
+        else
+            # Start with nohup as fallback
+            cd "$INSTALL_PATH"
+            nohup PORT=$APP_PORT npm start > goldbooks-$INSTANCE_NAME.log 2>&1 &
+            echo $! > goldbooks-$INSTANCE_NAME.pid
+            
+            # Wait and check if process is running
+            sleep 5
+            if kill -0 $(cat goldbooks-$INSTANCE_NAME.pid 2>/dev/null) 2>/dev/null; then
+                print_success "Application started with nohup"
+            else
+                print_error "Application startup failed"
+                cat goldbooks-$INSTANCE_NAME.log | tail -20
+                exit 1
+            fi
         fi
     fi
+    
+    print_status "Performing health check..."
+    for i in {1..30}; do
+        if curl -s http://localhost:$APP_PORT >/dev/null 2>&1; then
+            print_success "Application is responding on port $APP_PORT"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            print_error "Application health check failed - not responding on port $APP_PORT"
+            print_status "Checking application logs..."
+            if [ "$INSTALL_SERVICE" = true ]; then
+                journalctl -u $SERVICE_NAME --no-pager -n 20
+            elif command -v pm2 &> /dev/null; then
+                pm2 logs $PM2_NAME --lines 20
+            else
+                tail -20 goldbooks-$INSTANCE_NAME.log
+            fi
+            exit 1
+        fi
+        sleep 2
+    done
 }
 
 # ============================================================================
@@ -545,8 +648,10 @@ main() {
     echo
     echo "📋 INSTALLATION SUMMARY:"
     echo "========================"
+    echo "   🏷️  Instance: $INSTANCE_NAME"
     echo "   📂 Location: $INSTALL_PATH"
     echo "   🌐 Access URL: $PROTOCOL://$DOMAIN$APP_PATH"
+    echo "   🔌 Port: $APP_PORT"
     echo "   👤 Admin Login: $ADMIN_EMAIL"
     echo "   🔑 Admin Password: $ADMIN_PASSWORD"
     echo "   💾 Database: $DB_TYPE"
@@ -554,8 +659,10 @@ main() {
         echo "   📊 DB Name: $DB_NAME"
         echo "   👤 DB User: $DB_USER"
         echo "   🔑 DB Pass: $DB_PASS"
+    elif [ "$DB_TYPE" = "sqlite" ]; then
+        echo "   📁 DB File: $DB_NAME"
     fi
-    echo "   🔧 Service: $([ "$INSTALL_SERVICE" = true ] && echo "System Service" || echo "Manual Start")"
+    echo "   🔧 Service: $([ "$INSTALL_SERVICE" = true ] && echo "$SERVICE_NAME" || echo "PM2: goldbooks-$INSTANCE_NAME")"
     echo
     echo "🚀 NEXT STEPS:"
     echo "   • Open your browser and navigate to: $PROTOCOL://$DOMAIN$APP_PATH"
@@ -564,31 +671,40 @@ main() {
     echo
     if [ "$INSTALL_SERVICE" = false ]; then
         echo "📝 MANUAL COMMANDS:"
-        echo "   • Start: cd $INSTALL_PATH && npm start"
-        echo "   • Stop: pkill -f 'npm start' or pm2 stop goldbooks"
-        echo "   • Logs: tail -f goldbooks.log or pm2 logs goldbooks"
+        echo "   • Start: cd $INSTALL_PATH && PORT=$APP_PORT npm start"
+        echo "   • Stop: pm2 stop goldbooks-$INSTANCE_NAME"
+        echo "   • Logs: pm2 logs goldbooks-$INSTANCE_NAME"
         echo
     fi
     
-    # Save credentials to file
-    cat > "$INSTALL_PATH/CREDENTIALS.txt" << EOF
-Gold Financial Books - Installation Credentials
+    cat > "$INSTALL_PATH/CREDENTIALS-$INSTANCE_NAME.txt" << EOF
+Gold Financial Books - Instance: $INSTANCE_NAME
 ==============================================
 
 Access URL: $PROTOCOL://$DOMAIN$APP_PATH
 Admin Email: $ADMIN_EMAIL
 Admin Password: $ADMIN_PASSWORD
+Port: $APP_PORT
 
 $([ "$DB_TYPE" = "mysql" ] && echo "Database Credentials:
 Database Name: $DB_NAME
 Database User: $DB_USER
-Database Password: $DB_PASS")
+Database Password: $DB_PASS" || echo "Database File: $DB_NAME")
 
 Installation Date: $(date)
+Installation Path: $INSTALL_PATH
+Service Name: $([ "$INSTALL_SERVICE" = true ] && echo "$SERVICE_NAME" || echo "PM2: goldbooks-$INSTANCE_NAME")
 EOF
     
-    print_success "Credentials saved to: $INSTALL_PATH/CREDENTIALS.txt"
-    print_success "Gold Financial Books is ready to use! 🏆"
+    print_success "Credentials saved to: $INSTALL_PATH/CREDENTIALS-$INSTANCE_NAME.txt"
+    print_success "Gold Financial Books instance '$INSTANCE_NAME' is ready to use! 🏆"
+    
+    # Show all instances if multiple exist
+    if [ -f "/etc/nginx/sites-available/goldbooks" ]; then
+        echo
+        print_status "All instances on this server:"
+        grep -o "location [^{]*" /etc/nginx/sites-available/goldbooks | grep -v "location /" | sed "s/location /   • $PROTOCOL:\/\/$DOMAIN/"
+    fi
 }
 
 # Run main function
